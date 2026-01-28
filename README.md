@@ -4,12 +4,15 @@
 
 A custom Home Assistant integration for tracking cat care activities (feeding, insulin, water, blood glucose) with Google Sheets as the backend database.
 
+![Cat Care Tracker Card](https://github.com/user-attachments/assets/5334d8fc-9904-4221-bda2-72dde45fa75b)
+
 ## Features
 
 - 🍽️ **Track Feedings** - Log when your cat is fed
 - 💉 **Track Insulin** - Log insulin injections with timestamps
 - 💧 **Track Water** - Log water bowl refills
 - 🩸 **Track Blood Glucose** - Log blood glucose measurements
+- 🔐 **OAuth2 Login** - Secure Google authentication during setup (no service account needed!)
 
 ### Dashboard Card
 
@@ -51,28 +54,29 @@ All data is synced with your Google Sheets spreadsheet, matching your existing c
 
 1. **Create a Google Cloud Project**
    - Go to [Google Cloud Console](https://console.cloud.google.com/)
-   - Create a new project
-   - Enable the Google Sheets API
+   - Create a new project or select an existing one
+   - Enable the **Google Sheets API**
 
-2. **Create a Service Account**
+2. **Create OAuth 2.0 Credentials**
    - Go to "APIs & Services" → "Credentials"
-   - Click "Create Credentials" → "Service Account"
-   - Download the JSON key file
-   - Place it in your Home Assistant config directory (e.g., `/config/cat_care_tracker_credentials.json`)
+   - Click "Create Credentials" → "OAuth client ID"
+   - Select "Web application" as the application type
+   - Add `https://my.home-assistant.io/redirect/oauth` to "Authorized redirect URIs"
+   - Download or copy the Client ID and Client Secret
 
-3. **Share Your Google Sheet**
-   - Open your Google Sheet
-   - Click "Share"
-   - Add the service account email (found in the JSON file as `client_email`)
-   - Grant "Editor" access
+3. **Configure OAuth Consent Screen**
+   - Go to "APIs & Services" → "OAuth consent screen"
+   - Configure the consent screen (can be "External" for personal use)
+   - Add your email to test users if in testing mode
 
 ### Setup in Home Assistant
 
-1. Go to Settings → Devices & Services → Add Integration
+1. Go to **Settings** → **Devices & Services** → **Add Integration**
 2. Search for "Cat Care Tracker"
-3. Enter:
+3. You'll be prompted to enter your OAuth credentials (Client ID and Secret from Google Cloud)
+4. Click through to **authorize with Google** - you'll be redirected to Google's login page
+5. After authorization, enter:
    - **Google Spreadsheet ID**: The ID from your sheet URL (e.g., `https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID/edit`)
-   - **Credentials File Path**: Path to your service account JSON file
    - **Cat's Name**: Your cat's name (used for sensor naming)
 
 ### Add the Dashboard Card
@@ -206,18 +210,19 @@ automation:
 ### Dashboard Card
 The card shows today's activity counts and provides quick action buttons:
 
-![Card Preview](docs/card-preview.png)
+![Card Preview](https://github.com/user-attachments/assets/5334d8fc-9904-4221-bda2-72dde45fa75b)
 
 ## Troubleshooting
 
 ### "Failed to connect to Google Sheets"
-- Ensure the service account JSON file exists at the specified path
-- Verify the Spreadsheet ID is correct
-- Check that the service account has been granted Editor access to the sheet
+- Verify the Spreadsheet ID is correct (it's the long string in your sheet's URL)
+- Make sure you've authorized the correct Google account that has access to the sheet
+- Try re-authenticating by removing and re-adding the integration
 
-### "Invalid credentials file"
-- Make sure the JSON file is a valid Google Service Account key
-- The file should contain `type`, `project_id`, `private_key`, etc.
+### "OAuth authentication error"
+- Ensure your OAuth redirect URI is set correctly: `https://my.home-assistant.io/redirect/oauth`
+- Make sure the Google Sheets API is enabled in your Google Cloud project
+- If using "External" OAuth consent screen, ensure your email is added as a test user
 
 ### Card not showing
 - Ensure you've added the card as a Lovelace resource

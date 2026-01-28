@@ -8,13 +8,16 @@ from typing import Any
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.helpers.config_entry_oauth2_flow import (
+    OAuth2Session,
+    async_get_config_entry_implementation,
+)
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 import voluptuous as vol
 
 from .const import (
     DOMAIN,
     CONF_SPREADSHEET_ID,
-    CONF_CREDENTIALS_FILE,
     CONF_CAT_NAME,
     CHECKIN_TYPE_FOOD,
     CHECKIN_TYPE_INSULIN,
@@ -31,7 +34,7 @@ from .const import (
     ATTR_WATER_REFILL,
     ATTR_BG_LEVEL,
 )
-from .google_sheets import GoogleSheetsClient
+from .google_sheets import GoogleSheetsOAuthClient
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,21 +45,29 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Cat Care Tracker from a config entry."""
     hass.data.setdefault(DOMAIN, {})
 
-    credentials_file = entry.data[CONF_CREDENTIALS_FILE]
+    # Get the OAuth2 implementation and create a session
+    implementation = await async_get_config_entry_implementation(hass, entry)
+    session = OAuth2Session(hass, entry, implementation)
+
+    # Ensure we have a valid token
+    await session.async_ensure_token_valid()
+
     spreadsheet_id = entry.data[CONF_SPREADSHEET_ID]
 
-    # Create the Google Sheets client
-    client = GoogleSheetsClient(credentials_file, spreadsheet_id)
-
-    # Connect to Google Sheets
-    connected = await hass.async_add_executor_job(client.connect)
-    if not connected:
-        _LOGGER.error("Failed to connect to Google Sheets")
-        return False
+    def create_client() -> GoogleSheetsOAuthClient:
+        """Create a new client with the current access token."""
+        return GoogleSheetsOAuthClient(
+            session.token["access_token"],
+            spreadsheet_id,
+        )
 
     async def async_update_data() -> dict[str, Any]:
         """Fetch data from Google Sheets."""
         try:
+            # Ensure token is valid before making API calls
+            await session.async_ensure_token_valid()
+            client = create_client()
+
             # Get last entries for each type
             data = {}
 
@@ -81,7 +92,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
             return data
         except Exception as err:
-            raise UpdateFailed(f"Error communicating with Google Sheets: {err}")
+            raise UpdateFailed(f"Error communicating with Google Sheets: {err}") from err
 
     # Create the data update coordinator
     coordinator = DataUpdateCoordinator(
@@ -95,10 +106,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Fetch initial data
     await coordinator.async_config_entry_first_refresh()
 
-    # Store the coordinator and client
+    # Store the coordinator and session
     hass.data[DOMAIN][entry.entry_id] = {
         "coordinator": coordinator,
-        "client": client,
+        "session": session,
+        "create_client": create_client,
     }
 
     # Set up platforms
@@ -113,6 +125,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def _async_setup_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Set up services for Cat Care Tracker."""
 
+    async def get_client() -> GoogleSheetsOAuthClient:
+        """Get a client with a valid token."""
+        session = hass.data[DOMAIN][entry.entry_id]["session"]
+        await session.async_ensure_token_valid()
+        return hass.data[DOMAIN][entry.entry_id]["create_client"]()
+
     async def handle_log_entry(call: ServiceCall) -> None:
         """Handle the log_entry service call."""
         checkin_types = call.data.get(ATTR_CHECKIN_TYPES, [])
@@ -124,7 +142,7 @@ async def _async_setup_services(hass: HomeAssistant, entry: ConfigEntry) -> None
             _LOGGER.error("No check-in types specified")
             return
 
-        client = hass.data[DOMAIN][entry.entry_id]["client"]
+        client = await get_client()
         coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
 
         success = await hass.async_add_executor_job(
@@ -139,7 +157,7 @@ async def _async_setup_services(hass: HomeAssistant, entry: ConfigEntry) -> None
     async def handle_log_feeding(call: ServiceCall) -> None:
         """Handle the log_feeding service call."""
         entry_time = call.data.get("time")
-        client = hass.data[DOMAIN][entry.entry_id]["client"]
+        client = await get_client()
         coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
 
         success = await hass.async_add_executor_job(
@@ -152,7 +170,7 @@ async def _async_setup_services(hass: HomeAssistant, entry: ConfigEntry) -> None
     async def handle_log_insulin(call: ServiceCall) -> None:
         """Handle the log_insulin service call."""
         entry_time = call.data.get("time")
-        client = hass.data[DOMAIN][entry.entry_id]["client"]
+        client = await get_client()
         coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
 
         success = await hass.async_add_executor_job(
@@ -166,7 +184,7 @@ async def _async_setup_services(hass: HomeAssistant, entry: ConfigEntry) -> None
         """Handle the log_water service call."""
         water_refill = call.data.get(ATTR_WATER_REFILL)
         entry_time = call.data.get("time")
-        client = hass.data[DOMAIN][entry.entry_id]["client"]
+        client = await get_client()
         coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
 
         success = await hass.async_add_executor_job(
@@ -180,7 +198,7 @@ async def _async_setup_services(hass: HomeAssistant, entry: ConfigEntry) -> None
         """Handle the log_blood_glucose service call."""
         bg_level = call.data.get(ATTR_BG_LEVEL)
         entry_time = call.data.get("time")
-        client = hass.data[DOMAIN][entry.entry_id]["client"]
+        client = await get_client()
         coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
 
         if not bg_level:

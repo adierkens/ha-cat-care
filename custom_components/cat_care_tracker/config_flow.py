@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-import os
 from typing import Any
 
 import voluptuous as vol
@@ -11,85 +10,108 @@ from homeassistant import config_entries
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.config_entry_oauth2_flow import (
+    AbstractOAuth2FlowHandler,
+)
 
 from .const import (
     DOMAIN,
     CONF_SPREADSHEET_ID,
-    CONF_CREDENTIALS_FILE,
     CONF_CAT_NAME,
 )
-from .google_sheets import GoogleSheetsClient
 
 _LOGGER = logging.getLogger(__name__)
 
-
-async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
-    """Validate the user input and test the connection."""
-    credentials_file = data[CONF_CREDENTIALS_FILE]
-    spreadsheet_id = data[CONF_SPREADSHEET_ID]
-
-    # Check if credentials file exists
-    if not os.path.isfile(credentials_file):
-        raise InvalidCredentials("Credentials file not found")
-
-    # Try to connect to Google Sheets
-    client = GoogleSheetsClient(credentials_file, spreadsheet_id)
-
-    # Run connection test in executor to avoid blocking
-    connected = await hass.async_add_executor_job(client.connect)
-
-    if not connected:
-        raise CannotConnect("Failed to connect to Google Sheets")
-
-    return {"title": f"Cat Care Tracker - {data.get(CONF_CAT_NAME, 'My Cat')}"}
+# Google Sheets API scope
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 
-class CatCareTrackerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Cat Care Tracker."""
+class CatCareTrackerOAuth2FlowHandler(
+    AbstractOAuth2FlowHandler, domain=DOMAIN
+):
+    """Handle OAuth2 config flow for Cat Care Tracker."""
 
-    VERSION = 1
+    DOMAIN = DOMAIN
+
+    @property
+    def logger(self) -> logging.Logger:
+        """Return logger."""
+        return _LOGGER
+
+    @property
+    def extra_authorize_data(self) -> dict[str, Any]:
+        """Extra data that needs to be appended to the authorize url."""
+        return {
+            "scope": " ".join(SCOPES),
+            "access_type": "offline",
+            "prompt": "consent",
+        }
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Handle the initial step."""
+        """Handle a flow initiated by the user."""
+        return await self.async_step_pick_implementation(user_input)
+
+    async def async_oauth_create_entry(self, data: dict[str, Any]) -> FlowResult:
+        """Create an entry for the flow after OAuth completes."""
+        # After OAuth, we need to collect additional information
+        self._oauth_data = data
+        return await self.async_step_configure()
+
+    async def async_step_configure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Configure spreadsheet and cat name after OAuth."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
+            # Validate the spreadsheet ID by attempting to access it
             try:
-                info = await validate_input(self.hass, user_input)
+                from .google_sheets import GoogleSheetsOAuthClient
 
-                # Check if this spreadsheet is already configured
-                await self.async_set_unique_id(user_input[CONF_SPREADSHEET_ID])
-                self._abort_if_unique_id_configured()
+                client = GoogleSheetsOAuthClient(
+                    self._oauth_data["token"]["access_token"],
+                    user_input[CONF_SPREADSHEET_ID],
+                )
 
-                return self.async_create_entry(title=info["title"], data=user_input)
+                # Test connection
+                connected = await self.hass.async_add_executor_job(client.test_connection)
+                if not connected:
+                    errors["base"] = "invalid_spreadsheet"
+                else:
+                    # Check if this spreadsheet is already configured
+                    await self.async_set_unique_id(user_input[CONF_SPREADSHEET_ID])
+                    self._abort_if_unique_id_configured()
 
-            except CannotConnect:
-                errors["base"] = "cannot_connect"
-            except InvalidCredentials:
-                errors["base"] = "invalid_credentials"
-            except InvalidSpreadsheet:
-                errors["base"] = "invalid_spreadsheet"
+                    # Merge OAuth data with user config
+                    entry_data = {
+                        **self._oauth_data,
+                        **user_input,
+                    }
+
+                    cat_name = user_input.get(CONF_CAT_NAME, "My Cat")
+                    return self.async_create_entry(
+                        title=f"Cat Care Tracker - {cat_name}",
+                        data=entry_data,
+                    )
+
             except Exception:
-                _LOGGER.exception("Unexpected exception")
+                _LOGGER.exception("Unexpected exception during configuration")
                 errors["base"] = "unknown"
 
-        # Default values for the form
-        default_credentials = "/config/cat_care_tracker_credentials.json"
-
-        data_schema = vol.Schema(
-            {
-                vol.Required(CONF_SPREADSHEET_ID): cv.string,
-                vol.Required(
-                    CONF_CREDENTIALS_FILE, default=default_credentials
-                ): cv.string,
-                vol.Required(CONF_CAT_NAME, default="My Cat"): cv.string,
-            }
-        )
-
         return self.async_show_form(
-            step_id="user", data_schema=data_schema, errors=errors
+            step_id="configure",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_SPREADSHEET_ID): cv.string,
+                    vol.Required(CONF_CAT_NAME, default="My Cat"): cv.string,
+                }
+            ),
+            errors=errors,
+            description_placeholders={
+                "spreadsheet_url": "https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID/edit"
+            },
         )
 
     @staticmethod
@@ -113,6 +135,11 @@ class CatCareTrackerOptionsFlow(config_entries.OptionsFlow):
     ) -> FlowResult:
         """Handle options flow."""
         if user_input is not None:
+            # Update the config entry data with the new cat name
+            new_data = {**self.config_entry.data, **user_input}
+            self.hass.config_entries.async_update_entry(
+                self.config_entry, data=new_data
+            )
             return self.async_create_entry(title="", data=user_input)
 
         current_cat_name = self.config_entry.data.get(CONF_CAT_NAME, "My Cat")

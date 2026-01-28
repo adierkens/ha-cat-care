@@ -1,24 +1,27 @@
 {
   "config": {
     "step": {
-      "user": {
-        "title": "Cat Care Tracker Setup",
-        "description": "Set up your Cat Care Tracker to sync with Google Sheets.",
+      "pick_implementation": {
+        "title": "Pick Authentication Method"
+      },
+      "configure": {
+        "title": "Configure Cat Care Tracker",
+        "description": "Enter your Google Spreadsheet ID (found in the URL: {spreadsheet_url}) and your cat's name.",
         "data": {
           "spreadsheet_id": "Google Spreadsheet ID",
-          "credentials_file": "Path to service account credentials JSON file",
           "cat_name": "Cat's Name"
         }
       }
     },
     "error": {
       "cannot_connect": "Failed to connect to Google Sheets",
-      "invalid_credentials": "Invalid credentials file",
-      "invalid_spreadsheet": "Invalid spreadsheet ID or no access",
+      "invalid_spreadsheet": "Invalid spreadsheet ID or no access. Make sure you have access to the spreadsheet.",
       "unknown": "Unexpected error"
     },
     "abort": {
-      "already_configured": "This spreadsheet is already configured"
+      "already_configured": "This spreadsheet is already configured",
+      "missing_configuration": "Application credentials not configured. Please configure them first.",
+      "oauth_error": "OAuth authentication error"
     }
   },
   "options": {
@@ -30,5 +33,8 @@
         }
       }
     }
+  },
+  "application_credentials": {
+    "description": "Follow the [instructions]({more_info_url}) to configure your Google Cloud project:\n1. Go to [Google Cloud Console]({oauth_creds_url})\n2. Create OAuth 2.0 credentials\n3. Set authorized redirect URI to: `https://my.home-assistant.io/redirect/oauth`\n4. Enable the Google Sheets API"
   }
 }

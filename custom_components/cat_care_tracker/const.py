@@ -50,4 +50,4 @@ ATTR_BG_LEVEL = "bg_level"
 ATTR_ENTRIES_TODAY = "entries_today"
 
 # Default values
-DEFAULT_UPDATE_INTERVAL = 300  # 5 minutes in seconds
+DEFAULT_UPDATE_INTERVAL = 600  # 10 minutes in seconds (conservative for API rate limits)
