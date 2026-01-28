@@ -1,0 +1,15 @@
+{
+  "domain": "cat_care_tracker",
+  "name": "Cat Care Tracker",
+  "codeowners": ["@adierkens"],
+  "config_flow": true,
+  "documentation": "https://github.com/adierkens/ha-google-sheets",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/adierkens/ha-google-sheets/issues",
+  "requirements": [
+    "google-api-python-client>=2.100.0",
+    "google-auth>=2.23.0",
+    "google-auth-oauthlib>=1.1.0"
+  ],
+  "version": "1.0.0"
+}

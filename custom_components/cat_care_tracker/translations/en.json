@@ -1,0 +1,34 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Cat Care Tracker Setup",
+        "description": "Set up your Cat Care Tracker to sync with Google Sheets.",
+        "data": {
+          "spreadsheet_id": "Google Spreadsheet ID",
+          "credentials_file": "Path to service account credentials JSON file",
+          "cat_name": "Cat's Name"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to Google Sheets",
+      "invalid_credentials": "Invalid credentials file",
+      "invalid_spreadsheet": "Invalid spreadsheet ID or no access",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "This spreadsheet is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Cat Care Tracker Options",
+        "data": {
+          "cat_name": "Cat's Name"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,106 @@
+log_entry:
+  name: Log Entry
+  description: Log a cat care entry to Google Sheets
+  fields:
+    checkin_types:
+      name: Check-in Types
+      description: List of check-in types to log
+      required: true
+      example: '["Food", "Insulin"]'
+      selector:
+        select:
+          multiple: true
+          options:
+            - "Food"
+            - "Water"
+            - "Insulin"
+            - "Blood Glucose Measurement"
+    water_refill:
+      name: Water Refill
+      description: Water refill amount (optional)
+      required: false
+      example: "250ml"
+      selector:
+        text:
+    bg_level:
+      name: Blood Glucose Level
+      description: Blood glucose level in mg/dL (optional)
+      required: false
+      example: 120
+      selector:
+        number:
+          min: 0
+          max: 500
+          unit_of_measurement: mg/dL
+    time:
+      name: Time
+      description: Time of the entry (optional, defaults to current time)
+      required: false
+      example: "08:30"
+      selector:
+        time:
+
+log_feeding:
+  name: Log Feeding
+  description: Log a feeding entry to Google Sheets
+  fields:
+    time:
+      name: Time
+      description: Time of the feeding (optional, defaults to current time)
+      required: false
+      example: "08:30"
+      selector:
+        time:
+
+log_insulin:
+  name: Log Insulin
+  description: Log an insulin injection entry to Google Sheets
+  fields:
+    time:
+      name: Time
+      description: Time of the insulin injection (optional, defaults to current time)
+      required: false
+      example: "08:30"
+      selector:
+        time:
+
+log_water:
+  name: Log Water
+  description: Log a water refill entry to Google Sheets
+  fields:
+    water_refill:
+      name: Water Refill Amount
+      description: Amount of water refilled
+      required: false
+      example: "250ml"
+      selector:
+        text:
+    time:
+      name: Time
+      description: Time of the water refill (optional, defaults to current time)
+      required: false
+      example: "08:30"
+      selector:
+        time:
+
+log_blood_glucose:
+  name: Log Blood Glucose
+  description: Log a blood glucose measurement to Google Sheets
+  fields:
+    bg_level:
+      name: Blood Glucose Level
+      description: Blood glucose level in mg/dL
+      required: true
+      example: 120
+      selector:
+        number:
+          min: 0
+          max: 500
+          unit_of_measurement: mg/dL
+    time:
+      name: Time
+      description: Time of the measurement (optional, defaults to current time)
+      required: false
+      example: "08:30"
+      selector:
+        time:
