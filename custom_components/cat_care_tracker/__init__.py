@@ -3,8 +3,10 @@ from __future__ import annotations
 
 from datetime import timedelta, date
 import logging
+from pathlib import Path
 from typing import Any
 
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall
@@ -40,6 +42,16 @@ from .google_sheets import GoogleSheetsOAuthClient
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [Platform.SENSOR]
+
+
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Set up the Cat Care Tracker integration."""
+    # Register static path for frontend card (once per integration, not per config entry)
+    www_path = Path(__file__).parent / "www"
+    await hass.http.async_register_static_paths(
+        [StaticPathConfig("/cat_care_tracker_static", str(www_path), False)]
+    )
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

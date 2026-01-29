@@ -1,12 +1,13 @@
 """Tests for Cat Care Tracker initialization and service handlers."""
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch, call
 from datetime import date
+from pathlib import Path
 
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 
-from custom_components.cat_care_tracker import async_setup_entry, _async_setup_services
+from custom_components.cat_care_tracker import async_setup, async_setup_entry, _async_setup_services
 from custom_components.cat_care_tracker.const import (
     DOMAIN,
     CHECKIN_TYPE_FOOD,
@@ -22,6 +23,33 @@ from custom_components.cat_care_tracker.const import (
     ATTR_WATER_REFILL,
     ATTR_BG_LEVEL,
 )
+
+
+@pytest.mark.asyncio
+async def test_static_path_registration(hass: HomeAssistant):
+    """Test that the static path for frontend resources is registered."""
+    # Mock the HTTP component's async_register_static_paths
+    hass.http = MagicMock()
+    hass.http.async_register_static_paths = AsyncMock()
+
+    # Call async_setup
+    result = await async_setup(hass, {})
+
+    # Verify the function returned True
+    assert result is True
+
+    # Verify async_register_static_paths was called
+    hass.http.async_register_static_paths.assert_called_once()
+
+    # Get the call arguments
+    call_args = hass.http.async_register_static_paths.call_args[0][0]
+
+    # Verify the path config
+    assert len(call_args) == 1
+    path_config = call_args[0]
+    assert path_config.url_path == "/cat_care_tracker_static"
+    assert "cat_care_tracker/www" in path_config.path
+    assert path_config.cache_headers is False
 
 
 @pytest.mark.asyncio
