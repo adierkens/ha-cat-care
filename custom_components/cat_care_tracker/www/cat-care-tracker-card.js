@@ -451,7 +451,7 @@ class CatCareTrackerCard extends HTMLElement {
         e.stopPropagation();
         // Use setTimeout to ensure modal opens after click event finishes
         setTimeout(() => {
-          modal.classList.add('show');
+          bgModal.classList.add('show');
           bgInput.focus();
         }, 0);
       });
