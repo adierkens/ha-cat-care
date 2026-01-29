@@ -150,7 +150,7 @@ async def _async_setup_services(hass: HomeAssistant, entry: ConfigEntry) -> None
         )
 
         if success:
-            await coordinator.async_request_refresh()
+            await coordinator.async_refresh()
         else:
             _LOGGER.error("Failed to log entry")
 
@@ -165,7 +165,7 @@ async def _async_setup_services(hass: HomeAssistant, entry: ConfigEntry) -> None
         )
 
         if success:
-            await coordinator.async_request_refresh()
+            await coordinator.async_refresh()
 
     async def handle_log_insulin(call: ServiceCall) -> None:
         """Handle the log_insulin service call."""
@@ -178,7 +178,7 @@ async def _async_setup_services(hass: HomeAssistant, entry: ConfigEntry) -> None
         )
 
         if success:
-            await coordinator.async_request_refresh()
+            await coordinator.async_refresh()
 
     async def handle_log_water(call: ServiceCall) -> None:
         """Handle the log_water service call."""
@@ -192,7 +192,7 @@ async def _async_setup_services(hass: HomeAssistant, entry: ConfigEntry) -> None
         )
 
         if success:
-            await coordinator.async_request_refresh()
+            await coordinator.async_refresh()
 
     async def handle_log_blood_glucose(call: ServiceCall) -> None:
         """Handle the log_blood_glucose service call."""
@@ -210,7 +210,7 @@ async def _async_setup_services(hass: HomeAssistant, entry: ConfigEntry) -> None
         )
 
         if success:
-            await coordinator.async_request_refresh()
+            await coordinator.async_refresh()
 
     # Register services if not already registered
     if not hass.services.has_service(DOMAIN, SERVICE_LOG_ENTRY):
