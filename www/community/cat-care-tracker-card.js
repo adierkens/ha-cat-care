@@ -7,7 +7,6 @@ class CatCareTrackerCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    this._eventListenersSetup = false;
   }
 
   setConfig(config) {
@@ -384,11 +383,7 @@ class CatCareTrackerCard extends HTMLElement {
       </ha-card>
     `;
 
-    // Only setup event listeners once
-    if (!this._eventListenersSetup) {
-      this._setupEventListeners();
-      this._eventListenersSetup = true;
-    }
+    this._setupEventListeners();
   }
 
   _renderEntry(entry) {
@@ -436,8 +431,9 @@ class CatCareTrackerCard extends HTMLElement {
     if (btnBg) {
       btnBg.addEventListener('click', (e) => {
         e.stopPropagation();
-        modal.classList.add('show');
+        // Use setTimeout to ensure modal opens after click event finishes
         setTimeout(() => {
+          modal.classList.add('show');
           bgInput.focus();
         }, 0);
       });
