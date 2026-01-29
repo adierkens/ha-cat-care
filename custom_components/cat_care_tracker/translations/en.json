@@ -9,7 +9,8 @@
         "description": "Enter your Google Spreadsheet ID (found in the URL: {spreadsheet_url}) and your cat's name.",
         "data": {
           "spreadsheet_id": "Google Spreadsheet ID",
-          "cat_name": "Cat's Name"
+          "cat_name": "Cat's Name",
+          "sheet_name": "Sheet Name"
         }
       }
     },
@@ -32,7 +33,8 @@
       "init": {
         "title": "Cat Care Tracker Options",
         "data": {
-          "cat_name": "Cat's Name"
+          "cat_name": "Cat's Name",
+          "sheet_name": "Sheet Name"
         }
       }
     }
