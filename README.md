@@ -214,15 +214,34 @@ The card shows today's activity counts and provides quick action buttons:
 
 ## Troubleshooting
 
+### Integration not showing in "Add Integration" list
+- The integration requires Application Credentials to be configured first
+- Go to **Settings** → **Devices & Services** → **Application Credentials**
+- Add credentials for "Cat Care Tracker" with your Google OAuth Client ID and Secret
+- After adding credentials, the integration will appear in the "Add Integration" list
+
+### "Spreadsheet not found" error
+- Double-check the Spreadsheet ID from your Google Sheets URL
+- The ID is the long string between `/d/` and `/edit` in the URL
+- Example: `https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID_HERE/edit`
+- Make sure you're copying just the ID, without any extra spaces or characters
+
+### "You don't have permission to access this spreadsheet"
+- Ensure you authenticated with the correct Google account during OAuth
+- Verify that the Google account has access to the spreadsheet (check sharing settings)
+- The account needs at least "Editor" permissions on the spreadsheet
+- Try removing and re-adding the integration to authenticate with a different account
+
 ### "Failed to connect to Google Sheets"
-- Verify the Spreadsheet ID is correct (it's the long string in your sheet's URL)
-- Make sure you've authorized the correct Google account that has access to the sheet
-- Try re-authenticating by removing and re-adding the integration
+- Check your internet connection
+- Verify the Google Sheets API is enabled in your Google Cloud project
+- Make sure your OAuth credentials are valid and not expired
 
 ### "OAuth authentication error"
 - Ensure your OAuth redirect URI is set correctly: `https://my.home-assistant.io/redirect/oauth`
 - Make sure the Google Sheets API is enabled in your Google Cloud project
 - If using "External" OAuth consent screen, ensure your email is added as a test user
+- Verify your Client ID and Client Secret are correct
 
 ### Card not showing
 - Ensure you've added the card as a Lovelace resource
