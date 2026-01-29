@@ -483,14 +483,6 @@ class CatCareTrackerCard extends HTMLElement {
         }
       });
     }
-
-    // Prevent clicks on modal content from closing the modal
-    const modalContent = this.shadowRoot.querySelector('.modal-content');
-    if (modalContent) {
-      modalContent.addEventListener('click', (e) => {
-        e.stopPropagation();
-      });
-    }
   }
 
   _logEntry(types) {
