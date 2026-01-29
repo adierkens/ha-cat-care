@@ -7,6 +7,7 @@ class CatCareTrackerCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    this._eventListenersSetup = false;
   }
 
   setConfig(config) {
@@ -118,6 +119,8 @@ class CatCareTrackerCard extends HTMLElement {
           transition: all 0.2s ease;
           font-size: 14px;
           font-weight: 500;
+          -webkit-user-select: none;
+          user-select: none;
         }
         
         .action-btn:hover {
@@ -381,7 +384,11 @@ class CatCareTrackerCard extends HTMLElement {
       </ha-card>
     `;
 
-    this._setupEventListeners();
+    // Only setup event listeners once
+    if (!this._eventListenersSetup) {
+      this._setupEventListeners();
+      this._eventListenersSetup = true;
+    }
   }
 
   _renderEntry(entry) {
@@ -427,9 +434,12 @@ class CatCareTrackerCard extends HTMLElement {
     }
 
     if (btnBg) {
-      btnBg.addEventListener('click', () => {
+      btnBg.addEventListener('click', (e) => {
+        e.stopPropagation();
         modal.classList.add('show');
-        bgInput.focus();
+        setTimeout(() => {
+          bgInput.focus();
+        }, 0);
       });
     }
 
@@ -475,6 +485,14 @@ class CatCareTrackerCard extends HTMLElement {
           modal.classList.remove('show');
           bgInput.value = '';
         }
+      });
+    }
+
+    // Prevent clicks on modal content from closing the modal
+    const modalContent = this.shadowRoot.querySelector('.modal-content');
+    if (modalContent) {
+      modalContent.addEventListener('click', (e) => {
+        e.stopPropagation();
       });
     }
   }
