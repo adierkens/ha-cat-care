@@ -102,9 +102,8 @@ class CatCareTrackerOAuth2FlowHandler(
                         CONF_CAT_NAME: user_input.get(CONF_CAT_NAME, "My Cat"),
                     }
 
-                    cat_name = user_input.get(CONF_CAT_NAME, "My Cat")
                     return self.async_create_entry(
-                        title=f"Cat Care Tracker - {cat_name}",
+                        title=f"Cat Care Tracker - {entry_data[CONF_CAT_NAME]}",
                         data=entry_data,
                     )
 
