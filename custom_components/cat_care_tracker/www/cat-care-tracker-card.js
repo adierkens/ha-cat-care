@@ -379,17 +379,6 @@ class CatCareTrackerCard extends HTMLElement {
           </div>
         </div>
         
-        <div class="bg-modal" id="water-modal">
-          <div class="modal-content">
-            <div class="modal-title">Enter Water Refill Amount</div>
-            <input type="text" class="modal-input" id="water-input" placeholder="e.g., 250ml">
-            <div class="modal-buttons">
-              <button class="modal-btn modal-btn-cancel" id="water-modal-cancel">Cancel</button>
-              <button class="modal-btn modal-btn-confirm" id="water-modal-confirm">Log</button>
-            </div>
-          </div>
-        </div>
-        
         <div class="toast" id="toast">Entry logged successfully!</div>
       </ha-card>
     `;
@@ -422,14 +411,10 @@ class CatCareTrackerCard extends HTMLElement {
     const btnWater = this.shadowRoot.getElementById('btn-water');
     const btnBg = this.shadowRoot.getElementById('btn-bg');
     const btnCombo = this.shadowRoot.getElementById('btn-combo');
-    const bgModal = this.shadowRoot.getElementById('bg-modal');
+    const modal = this.shadowRoot.getElementById('bg-modal');
     const modalCancel = this.shadowRoot.getElementById('modal-cancel');
     const modalConfirm = this.shadowRoot.getElementById('modal-confirm');
     const bgInput = this.shadowRoot.getElementById('bg-input');
-    const waterModal = this.shadowRoot.getElementById('water-modal');
-    const waterModalCancel = this.shadowRoot.getElementById('water-modal-cancel');
-    const waterModalConfirm = this.shadowRoot.getElementById('water-modal-confirm');
-    const waterInput = this.shadowRoot.getElementById('water-input');
 
     if (btnFood) {
       btnFood.addEventListener('click', () => this._logEntry(['Food']));
@@ -440,10 +425,7 @@ class CatCareTrackerCard extends HTMLElement {
     }
 
     if (btnWater) {
-      btnWater.addEventListener('click', () => {
-        waterModal.classList.add('show');
-        waterInput.focus();
-      });
+      btnWater.addEventListener('click', () => this._logEntry(['Water']));
     }
 
     if (btnBg) {
@@ -463,7 +445,7 @@ class CatCareTrackerCard extends HTMLElement {
 
     if (modalCancel) {
       modalCancel.addEventListener('click', () => {
-        bgModal.classList.remove('show');
+        modal.classList.remove('show');
         bgInput.value = '';
       });
     }
@@ -473,7 +455,7 @@ class CatCareTrackerCard extends HTMLElement {
         const bgValue = parseInt(bgInput.value, 10);
         if (bgValue && bgValue > 0) {
           this._logBgEntry(bgValue);
-          bgModal.classList.remove('show');
+          modal.classList.remove('show');
           bgInput.value = '';
         }
       });
@@ -485,60 +467,19 @@ class CatCareTrackerCard extends HTMLElement {
           const bgValue = parseInt(bgInput.value, 10);
           if (bgValue && bgValue > 0) {
             this._logBgEntry(bgValue);
-            bgModal.classList.remove('show');
+            modal.classList.remove('show');
             bgInput.value = '';
           }
         }
       });
     }
 
-    if (waterModalCancel) {
-      waterModalCancel.addEventListener('click', () => {
-        waterModal.classList.remove('show');
-        waterInput.value = '';
-      });
-    }
-
-    if (waterModalConfirm) {
-      waterModalConfirm.addEventListener('click', () => {
-        const waterValue = waterInput.value.trim();
-        if (waterValue) {
-          this._logWaterEntry(waterValue);
-          waterModal.classList.remove('show');
-          waterInput.value = '';
-        }
-      });
-    }
-
-    if (waterInput) {
-      waterInput.addEventListener('keyup', (e) => {
-        if (e.key === 'Enter') {
-          const waterValue = waterInput.value.trim();
-          if (waterValue) {
-            this._logWaterEntry(waterValue);
-            waterModal.classList.remove('show');
-            waterInput.value = '';
-          }
-        }
-      });
-    }
-
     // Close modal when clicking outside
-    if (bgModal) {
-      bgModal.addEventListener('click', (e) => {
-        if (e.target === bgModal) {
-          bgModal.classList.remove('show');
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.classList.remove('show');
           bgInput.value = '';
-        }
-      });
-    }
-
-    // Close water modal when clicking outside
-    if (waterModal) {
-      waterModal.addEventListener('click', (e) => {
-        if (e.target === waterModal) {
-          waterModal.classList.remove('show');
-          waterInput.value = '';
         }
       });
     }
@@ -554,13 +495,6 @@ class CatCareTrackerCard extends HTMLElement {
   _logBgEntry(bgLevel) {
     this._hass.callService('cat_care_tracker', 'log_blood_glucose', {
       bg_level: bgLevel,
-    });
-    this._showToast();
-  }
-
-  _logWaterEntry(waterRefill) {
-    this._hass.callService('cat_care_tracker', 'log_water', {
-      water_refill: waterRefill,
     });
     this._showToast();
   }

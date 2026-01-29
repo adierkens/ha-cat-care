@@ -3,8 +3,10 @@ from __future__ import annotations
 
 from datetime import timedelta, date
 import logging
+from pathlib import Path
 from typing import Any
 
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall
@@ -19,6 +21,7 @@ from .const import (
     DOMAIN,
     CONF_SPREADSHEET_ID,
     CONF_CAT_NAME,
+    CONF_SHEET_NAME,
     CHECKIN_TYPE_FOOD,
     CHECKIN_TYPE_INSULIN,
     CHECKIN_TYPE_WATER,
@@ -41,6 +44,16 @@ _LOGGER = logging.getLogger(__name__)
 PLATFORMS: list[Platform] = [Platform.SENSOR]
 
 
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Set up the Cat Care Tracker integration."""
+    # Register static path for frontend card (once per integration, not per config entry)
+    www_path = Path(__file__).parent / "www"
+    await hass.http.async_register_static_paths(
+        [StaticPathConfig("/cat_care_tracker_static", str(www_path), False)]
+    )
+    return True
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Cat Care Tracker from a config entry."""
     hass.data.setdefault(DOMAIN, {})
@@ -53,12 +66,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await session.async_ensure_token_valid()
 
     spreadsheet_id = entry.data[CONF_SPREADSHEET_ID]
+    sheet_name = entry.data.get(CONF_SHEET_NAME, "Sheet1")
 
     def create_client() -> GoogleSheetsOAuthClient:
         """Create a new client with the current access token."""
         return GoogleSheetsOAuthClient(
             session.token["access_token"],
             spreadsheet_id,
+            sheet_name,
         )
 
     async def async_update_data() -> dict[str, Any]:
@@ -150,7 +165,7 @@ async def _async_setup_services(hass: HomeAssistant, entry: ConfigEntry) -> None
         )
 
         if success:
-            await coordinator.async_request_refresh()
+            await coordinator.async_refresh()
         else:
             _LOGGER.error("Failed to log entry")
 
@@ -165,7 +180,9 @@ async def _async_setup_services(hass: HomeAssistant, entry: ConfigEntry) -> None
         )
 
         if success:
-            await coordinator.async_request_refresh()
+            await coordinator.async_refresh()
+        else:
+            _LOGGER.error("Failed to log feeding")
 
     async def handle_log_insulin(call: ServiceCall) -> None:
         """Handle the log_insulin service call."""
@@ -178,7 +195,9 @@ async def _async_setup_services(hass: HomeAssistant, entry: ConfigEntry) -> None
         )
 
         if success:
-            await coordinator.async_request_refresh()
+            await coordinator.async_refresh()
+        else:
+            _LOGGER.error("Failed to log insulin")
 
     async def handle_log_water(call: ServiceCall) -> None:
         """Handle the log_water service call."""
@@ -192,7 +211,9 @@ async def _async_setup_services(hass: HomeAssistant, entry: ConfigEntry) -> None
         )
 
         if success:
-            await coordinator.async_request_refresh()
+            await coordinator.async_refresh()
+        else:
+            _LOGGER.error("Failed to log water")
 
     async def handle_log_blood_glucose(call: ServiceCall) -> None:
         """Handle the log_blood_glucose service call."""
@@ -210,7 +231,9 @@ async def _async_setup_services(hass: HomeAssistant, entry: ConfigEntry) -> None
         )
 
         if success:
-            await coordinator.async_request_refresh()
+            await coordinator.async_refresh()
+        else:
+            _LOGGER.error("Failed to log blood glucose")
 
     # Register services if not already registered
     if not hass.services.has_service(DOMAIN, SERVICE_LOG_ENTRY):

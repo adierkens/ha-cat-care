@@ -45,8 +45,7 @@ All data is synced with your Google Sheets spreadsheet, matching your existing c
 ### Manual Installation
 
 1. Copy the `custom_components/cat_care_tracker` folder to your Home Assistant's `custom_components` directory
-2. Copy `www/community/cat-care-tracker-card.js` to your `www/community` directory
-3. Restart Home Assistant
+2. Restart Home Assistant
 
 ## Configuration
 
@@ -95,7 +94,7 @@ All data is synced with your Google Sheets spreadsheet, matching your existing c
 
 Or add the Lovelace resource manually:
 1. Go to Settings → Dashboards → Resources
-2. Add resource: `/local/community/cat-care-tracker-card.js`
+2. Add resource: `/cat_care_tracker_static/cat-care-tracker-card.js`
 3. Type: JavaScript Module
 
 ## Services
