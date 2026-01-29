@@ -14,9 +14,12 @@
       }
     },
     "error": {
-      "cannot_connect": "Failed to connect to Google Sheets",
+      "cannot_connect": "Failed to connect to Google Sheets. Please check your internet connection and try again.",
+      "spreadsheet_not_found": "Spreadsheet not found. Please verify the spreadsheet ID is correct. It should be a long string of letters and numbers from your spreadsheet URL.",
+      "no_permission": "You don't have permission to access this spreadsheet. Make sure you're signed in with the correct Google account and that the account has access to the spreadsheet.",
+      "invalid_auth": "Authentication failed. Please try removing and re-adding the integration to re-authenticate.",
       "invalid_spreadsheet": "Invalid spreadsheet ID or no access. Make sure you have access to the spreadsheet.",
-      "unknown": "Unexpected error"
+      "unknown": "Unexpected error occurred. Check the Home Assistant logs for more details."
     },
     "abort": {
       "already_configured": "This spreadsheet is already configured",

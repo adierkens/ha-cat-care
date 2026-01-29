@@ -70,24 +70,36 @@ class CatCareTrackerOAuth2FlowHandler(
             try:
                 from .google_sheets import GoogleSheetsOAuthClient
 
+                # Sanitize spreadsheet ID - strip whitespace
+                spreadsheet_id = user_input[CONF_SPREADSHEET_ID].strip()
+                
                 client = GoogleSheetsOAuthClient(
                     self._oauth_data["token"]["access_token"],
-                    user_input[CONF_SPREADSHEET_ID],
+                    spreadsheet_id,
                 )
 
                 # Test connection
-                connected = await self.hass.async_add_executor_job(client.test_connection)
+                connected, error_code = await self.hass.async_add_executor_job(client.test_connection)
                 if not connected:
-                    errors["base"] = "invalid_spreadsheet"
+                    # Map error codes to user-friendly error messages
+                    if error_code == "not_found":
+                        errors["base"] = "spreadsheet_not_found"
+                    elif error_code == "permission_denied":
+                        errors["base"] = "no_permission"
+                    elif error_code == "invalid_credentials":
+                        errors["base"] = "invalid_auth"
+                    else:
+                        errors["base"] = "cannot_connect"
                 else:
                     # Check if this spreadsheet is already configured
-                    await self.async_set_unique_id(user_input[CONF_SPREADSHEET_ID])
+                    await self.async_set_unique_id(spreadsheet_id)
                     self._abort_if_unique_id_configured()
 
-                    # Merge OAuth data with user config
+                    # Merge OAuth data with user config (use sanitized spreadsheet_id)
                     entry_data = {
                         **self._oauth_data,
-                        **user_input,
+                        CONF_SPREADSHEET_ID: spreadsheet_id,
+                        CONF_CAT_NAME: user_input.get(CONF_CAT_NAME, "My Cat"),
                     }
 
                     cat_name = user_input.get(CONF_CAT_NAME, "My Cat")

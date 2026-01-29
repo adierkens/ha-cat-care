@@ -41,20 +41,33 @@ class GoogleSheetsOAuthClient:
             self._service = build("sheets", "v4", credentials=creds, cache_discovery=False)
         return self._service
 
-    def test_connection(self) -> bool:
-        """Test connection to Google Sheets."""
+    def test_connection(self) -> tuple[bool, str | None]:
+        """Test connection to Google Sheets.
+        
+        Returns:
+            Tuple of (success, error_code) where error_code is None on success
+            or one of: 'not_found', 'permission_denied', 'invalid_credentials', 'unknown'
+        """
         try:
             service = self._get_service()
             service.spreadsheets().get(
                 spreadsheetId=self._spreadsheet_id
             ).execute()
-            return True
+            return True, None
         except HttpError as err:
             _LOGGER.error("Google Sheets API error: %s", err)
-            return False
+            # Determine specific error type based on HTTP status code
+            if err.resp.status == 404:
+                return False, "not_found"
+            elif err.resp.status == 403:
+                return False, "permission_denied"
+            elif err.resp.status == 401:
+                return False, "invalid_credentials"
+            else:
+                return False, "unknown"
         except Exception as err:
             _LOGGER.error("Unexpected error: %s", err)
-            return False
+            return False, "unknown"
 
     def append_entry(
         self,
