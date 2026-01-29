@@ -3,8 +3,10 @@ from __future__ import annotations
 
 from datetime import timedelta, date
 import logging
+from pathlib import Path
 from typing import Any
 
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall
@@ -45,6 +47,12 @@ PLATFORMS: list[Platform] = [Platform.SENSOR]
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Cat Care Tracker from a config entry."""
     hass.data.setdefault(DOMAIN, {})
+
+    # Register static path for frontend card
+    www_path = Path(__file__).parent / "www"
+    await hass.http.async_register_static_paths(
+        [StaticPathConfig(f"/cat_care_tracker_static", str(www_path), False)]
+    )
 
     # Get the OAuth2 implementation and create a session
     implementation = await async_get_config_entry_implementation(hass, entry)
