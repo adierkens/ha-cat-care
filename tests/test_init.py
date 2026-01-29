@@ -1,7 +1,8 @@
 """Tests for Cat Care Tracker initialization and service handlers."""
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch, call
 from datetime import date
+from pathlib import Path
 
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
@@ -22,6 +23,66 @@ from custom_components.cat_care_tracker.const import (
     ATTR_WATER_REFILL,
     ATTR_BG_LEVEL,
 )
+
+
+@pytest.mark.asyncio
+async def test_static_path_registration(hass: HomeAssistant):
+    """Test that the static path for frontend resources is registered."""
+    # Create a mock config entry
+    mock_entry = MagicMock(spec=ConfigEntry)
+    mock_entry.entry_id = "test_entry_id"
+    mock_entry.data = {
+        "spreadsheet_id": "test_spreadsheet_id",
+        "cat_name": "Whiskers",
+    }
+
+    # Mock the HTTP component's async_register_static_paths
+    hass.http = MagicMock()
+    hass.http.async_register_static_paths = AsyncMock()
+
+    # Mock the OAuth2 implementation
+    with patch(
+        "custom_components.cat_care_tracker.async_get_config_entry_implementation"
+    ) as mock_get_impl:
+        mock_implementation = AsyncMock()
+        mock_get_impl.return_value = mock_implementation
+
+        # Mock the OAuth2Session
+        with patch("custom_components.cat_care_tracker.OAuth2Session") as mock_session_class:
+            mock_session = AsyncMock()
+            mock_session.async_ensure_token_valid = AsyncMock()
+            mock_session.token = {"access_token": "test_token"}
+            mock_session_class.return_value = mock_session
+
+            # Mock the coordinator's first refresh
+            with patch(
+                "custom_components.cat_care_tracker.DataUpdateCoordinator.async_config_entry_first_refresh"
+            ) as mock_first_refresh:
+                mock_first_refresh.return_value = AsyncMock()
+
+                # Mock forward_entry_setups
+                with patch.object(
+                    hass.config_entries, "async_forward_entry_setups", return_value=AsyncMock()
+                ) as mock_forward:
+
+                    # Call async_setup_entry
+                    result = await async_setup_entry(hass, mock_entry)
+
+                    # Verify the function returned True
+                    assert result is True
+
+                    # Verify async_register_static_paths was called
+                    hass.http.async_register_static_paths.assert_called_once()
+
+                    # Get the call arguments
+                    call_args = hass.http.async_register_static_paths.call_args[0][0]
+
+                    # Verify the path config
+                    assert len(call_args) == 1
+                    path_config = call_args[0]
+                    assert path_config.url_path == "/cat_care_tracker_static"
+                    assert "cat_care_tracker/www" in path_config.path
+                    assert path_config.cache_headers is False
 
 
 @pytest.mark.asyncio
