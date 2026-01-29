@@ -118,6 +118,8 @@ class CatCareTrackerCard extends HTMLElement {
           transition: all 0.2s ease;
           font-size: 14px;
           font-weight: 500;
+          -webkit-user-select: none;
+          user-select: none;
         }
         
         .action-btn:hover {
@@ -427,9 +429,13 @@ class CatCareTrackerCard extends HTMLElement {
     }
 
     if (btnBg) {
-      btnBg.addEventListener('click', () => {
-        modal.classList.add('show');
-        bgInput.focus();
+      btnBg.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Use setTimeout to ensure modal opens after click event finishes
+        setTimeout(() => {
+          modal.classList.add('show');
+          bgInput.focus();
+        }, 0);
       });
     }
 
