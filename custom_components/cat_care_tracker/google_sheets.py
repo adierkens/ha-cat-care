@@ -27,12 +27,12 @@ SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 class GoogleSheetsOAuthClient:
     """Client for interacting with Google Sheets using OAuth tokens."""
 
-    def __init__(self, access_token: str, spreadsheet_id: str) -> None:
+    def __init__(self, access_token: str, spreadsheet_id: str, sheet_name: str = "Sheet1") -> None:
         """Initialize the Google Sheets OAuth client."""
         self._access_token = access_token
         self._spreadsheet_id = spreadsheet_id
         self._service = None
-        self._sheet_name = "Sheet1"  # Default sheet name
+        self._sheet_name = sheet_name
 
     def _get_service(self):
         """Get or create the Sheets service."""
@@ -209,12 +209,12 @@ class GoogleSheetsOAuthClient:
 class GoogleSheetsClient:
     """Client for interacting with Google Sheets using service account."""
 
-    def __init__(self, credentials_file: str, spreadsheet_id: str) -> None:
+    def __init__(self, credentials_file: str, spreadsheet_id: str, sheet_name: str = "Sheet1") -> None:
         """Initialize the Google Sheets client."""
         self._credentials_file = credentials_file
         self._spreadsheet_id = spreadsheet_id
         self._service = None
-        self._sheet_name = "Sheet1"  # Default sheet name
+        self._sheet_name = sheet_name
 
     def connect(self) -> bool:
         """Connect to Google Sheets API."""

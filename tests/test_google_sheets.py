@@ -24,6 +24,15 @@ class TestGoogleSheetsOAuthClient:
         assert client._access_token == "test_token"
         assert client._spreadsheet_id == "test_spreadsheet_id"
         assert client._service is None
+        assert client._sheet_name == "Sheet1"
+
+    def test_init_custom_sheet_name(self):
+        """Test client initialization with custom sheet name."""
+        client = GoogleSheetsOAuthClient("test_token", "test_spreadsheet_id", "CustomSheet")
+        assert client._access_token == "test_token"
+        assert client._spreadsheet_id == "test_spreadsheet_id"
+        assert client._service is None
+        assert client._sheet_name == "CustomSheet"
 
     @patch("custom_components.cat_care_tracker.google_sheets.build")
     @patch("custom_components.cat_care_tracker.google_sheets.OAuthCredentials")
@@ -132,6 +141,21 @@ class TestGoogleSheetsOAuthClient:
 
     @patch("custom_components.cat_care_tracker.google_sheets.build")
     @patch("custom_components.cat_care_tracker.google_sheets.OAuthCredentials")
+    def test_append_entry_custom_sheet_name(self, mock_creds, mock_build):
+        """Test appending an entry with custom sheet name."""
+        mock_service = MagicMock()
+        mock_build.return_value = mock_service
+
+        client = GoogleSheetsOAuthClient("test_token", "test_spreadsheet_id", "MySheet")
+        result = client.append_entry([CHECKIN_TYPE_FOOD])
+
+        assert result is True
+        # Verify the call was made with the custom sheet name
+        call_args = mock_service.spreadsheets().values().append.call_args
+        assert call_args[1]["range"] == "MySheet!A:E"
+
+    @patch("custom_components.cat_care_tracker.google_sheets.build")
+    @patch("custom_components.cat_care_tracker.google_sheets.OAuthCredentials")
     def test_get_entries(self, mock_creds, mock_build):
         """Test getting entries."""
         mock_service = MagicMock()
@@ -226,6 +250,15 @@ class TestGoogleSheetsClient:
         assert client._credentials_file == "/path/to/creds.json"
         assert client._spreadsheet_id == "test_spreadsheet_id"
         assert client._service is None
+        assert client._sheet_name == "Sheet1"
+
+    def test_init_custom_sheet_name(self):
+        """Test client initialization with custom sheet name."""
+        client = GoogleSheetsClient("/path/to/creds.json", "test_spreadsheet_id", "CustomSheet")
+        assert client._credentials_file == "/path/to/creds.json"
+        assert client._spreadsheet_id == "test_spreadsheet_id"
+        assert client._service is None
+        assert client._sheet_name == "CustomSheet"
 
     def test_connect_file_not_found(self):
         """Test connection with missing credentials file."""

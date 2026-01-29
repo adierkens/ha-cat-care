@@ -19,6 +19,7 @@ from .const import (
     DOMAIN,
     CONF_SPREADSHEET_ID,
     CONF_CAT_NAME,
+    CONF_SHEET_NAME,
     CHECKIN_TYPE_FOOD,
     CHECKIN_TYPE_INSULIN,
     CHECKIN_TYPE_WATER,
@@ -53,12 +54,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await session.async_ensure_token_valid()
 
     spreadsheet_id = entry.data[CONF_SPREADSHEET_ID]
+    sheet_name = entry.data.get(CONF_SHEET_NAME, "Sheet1")
 
     def create_client() -> GoogleSheetsOAuthClient:
         """Create a new client with the current access token."""
         return GoogleSheetsOAuthClient(
             session.token["access_token"],
             spreadsheet_id,
+            sheet_name,
         )
 
     async def async_update_data() -> dict[str, Any]:

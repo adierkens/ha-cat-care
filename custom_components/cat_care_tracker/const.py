@@ -6,6 +6,7 @@ DOMAIN = "cat_care_tracker"
 CONF_SPREADSHEET_ID = "spreadsheet_id"
 CONF_CREDENTIALS_FILE = "credentials_file"
 CONF_CAT_NAME = "cat_name"
+CONF_SHEET_NAME = "sheet_name"
 
 # Check-in types (matching Google Form options)
 CHECKIN_TYPE_FOOD = "Food"

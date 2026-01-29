@@ -18,6 +18,7 @@ from .const import (
     DOMAIN,
     CONF_SPREADSHEET_ID,
     CONF_CAT_NAME,
+    CONF_SHEET_NAME,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -72,10 +73,12 @@ class CatCareTrackerOAuth2FlowHandler(
 
                 # Sanitize spreadsheet ID - strip whitespace
                 spreadsheet_id = user_input[CONF_SPREADSHEET_ID].strip()
+                sheet_name = user_input.get(CONF_SHEET_NAME, "Sheet1").strip()
                 
                 client = GoogleSheetsOAuthClient(
                     self._oauth_data["token"]["access_token"],
                     spreadsheet_id,
+                    sheet_name,
                 )
 
                 # Test connection
@@ -100,6 +103,7 @@ class CatCareTrackerOAuth2FlowHandler(
                         **self._oauth_data,
                         CONF_SPREADSHEET_ID: spreadsheet_id,
                         CONF_CAT_NAME: user_input.get(CONF_CAT_NAME, "My Cat"),
+                        CONF_SHEET_NAME: sheet_name,
                     }
 
                     return self.async_create_entry(
@@ -117,6 +121,7 @@ class CatCareTrackerOAuth2FlowHandler(
                 {
                     vol.Required(CONF_SPREADSHEET_ID): cv.string,
                     vol.Required(CONF_CAT_NAME, default="My Cat"): cv.string,
+                    vol.Optional(CONF_SHEET_NAME, default="Sheet1"): cv.string,
                 }
             ),
             errors=errors,
@@ -146,7 +151,7 @@ class CatCareTrackerOptionsFlow(config_entries.OptionsFlow):
     ) -> FlowResult:
         """Handle options flow."""
         if user_input is not None:
-            # Update the config entry data with the new cat name
+            # Update the config entry data with the new cat name and sheet name
             new_data = {**self.config_entry.data, **user_input}
             self.hass.config_entries.async_update_entry(
                 self.config_entry, data=new_data
@@ -154,12 +159,14 @@ class CatCareTrackerOptionsFlow(config_entries.OptionsFlow):
             return self.async_create_entry(title="", data=user_input)
 
         current_cat_name = self.config_entry.data.get(CONF_CAT_NAME, "My Cat")
+        current_sheet_name = self.config_entry.data.get(CONF_SHEET_NAME, "Sheet1")
 
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_CAT_NAME, default=current_cat_name): cv.string,
+                    vol.Optional(CONF_SHEET_NAME, default=current_sheet_name): cv.string,
                 }
             ),
         )
