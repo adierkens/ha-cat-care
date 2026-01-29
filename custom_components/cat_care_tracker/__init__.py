@@ -44,15 +44,19 @@ _LOGGER = logging.getLogger(__name__)
 PLATFORMS: list[Platform] = [Platform.SENSOR]
 
 
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Set up the Cat Care Tracker integration."""
+    # Register static path for frontend card (once per integration, not per config entry)
+    www_path = Path(__file__).parent / "www"
+    await hass.http.async_register_static_paths(
+        [StaticPathConfig("/cat_care_tracker_static", str(www_path), False)]
+    )
+    return True
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Cat Care Tracker from a config entry."""
     hass.data.setdefault(DOMAIN, {})
-
-    # Register static path for frontend card
-    www_path = Path(__file__).parent / "www"
-    await hass.http.async_register_static_paths(
-        [StaticPathConfig(f"/cat_care_tracker_static", str(www_path), False)]
-    )
 
     # Get the OAuth2 implementation and create a session
     implementation = await async_get_config_entry_implementation(hass, entry)
