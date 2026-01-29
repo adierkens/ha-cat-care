@@ -33,9 +33,10 @@ class TestGoogleSheetsOAuthClient:
         mock_build.return_value = mock_service
 
         client = GoogleSheetsOAuthClient("test_token", "test_spreadsheet_id")
-        result = client.test_connection()
+        success, error_code = client.test_connection()
 
-        assert result is True
+        assert success is True
+        assert error_code is None
         mock_creds.assert_called_once_with(token="test_token")
 
     @patch("custom_components.cat_care_tracker.google_sheets.build")
@@ -51,9 +52,46 @@ class TestGoogleSheetsOAuthClient:
         mock_build.return_value = mock_service
 
         client = GoogleSheetsOAuthClient("test_token", "test_spreadsheet_id")
-        result = client.test_connection()
+        success, error_code = client.test_connection()
 
-        assert result is False
+        assert success is False
+        assert error_code == "not_found"
+
+    @patch("custom_components.cat_care_tracker.google_sheets.build")
+    @patch("custom_components.cat_care_tracker.google_sheets.OAuthCredentials")
+    def test_test_connection_permission_denied(self, mock_creds, mock_build):
+        """Test connection failure due to permission denied."""
+        from googleapiclient.errors import HttpError
+
+        mock_service = MagicMock()
+        mock_service.spreadsheets().get().execute.side_effect = HttpError(
+            resp=MagicMock(status=403), content=b"Permission denied"
+        )
+        mock_build.return_value = mock_service
+
+        client = GoogleSheetsOAuthClient("test_token", "test_spreadsheet_id")
+        success, error_code = client.test_connection()
+
+        assert success is False
+        assert error_code == "permission_denied"
+
+    @patch("custom_components.cat_care_tracker.google_sheets.build")
+    @patch("custom_components.cat_care_tracker.google_sheets.OAuthCredentials")
+    def test_test_connection_invalid_credentials(self, mock_creds, mock_build):
+        """Test connection failure due to invalid credentials."""
+        from googleapiclient.errors import HttpError
+
+        mock_service = MagicMock()
+        mock_service.spreadsheets().get().execute.side_effect = HttpError(
+            resp=MagicMock(status=401), content=b"Invalid credentials"
+        )
+        mock_build.return_value = mock_service
+
+        client = GoogleSheetsOAuthClient("test_token", "test_spreadsheet_id")
+        success, error_code = client.test_connection()
+
+        assert success is False
+        assert error_code == "invalid_credentials"
 
     @patch("custom_components.cat_care_tracker.google_sheets.build")
     @patch("custom_components.cat_care_tracker.google_sheets.OAuthCredentials")
